@@ -1,7 +1,7 @@
 import React from 'react';
 import { MdOutlinePushPin, MdCreate, MdDelete } from 'react-icons/md';
 
-const NoteCard = ({ title, date, content, isPinned, onEdit, onDelete, onPinNote }) => {
+const NoteCard = ({ title, date, content, screenshot, isPinned, onEdit, onDelete, onPinNote }) => {
   return (
     <div className="group border rounded-2xl p-5 bg-white hover:shadow-xl transition-all duration-200 ease-in-out flex flex-col justify-between min-h-[200px] relative">
       {/* Pin Icon */}
@@ -22,9 +22,22 @@ const NoteCard = ({ title, date, content, isPinned, onEdit, onDelete, onPinNote 
       </div>
 
       {/* Content Preview */}
-      <p className="text-sm text-gray-700 mt-2 line-clamp-3">
-        {content || <span className="italic text-gray-400">No content available.</span>}
-      </p>
+      {content && (
+        <p className="text-sm text-gray-700 mt-2 line-clamp-3">
+          {content}
+        </p>
+      )}
+
+      {/* Screenshot Preview */}
+      {screenshot && (
+        <div className="mt-3">
+          <img
+            src={screenshot}
+            alt="Note Screenshot"
+            className="w-full max-h-60 object-contain rounded-lg border"
+          />
+        </div>
+      )}
 
       {/* Divider */}
       <div className="border-t mt-4 mb-2" />
@@ -51,3 +64,4 @@ const NoteCard = ({ title, date, content, isPinned, onEdit, onDelete, onPinNote 
 };
 
 export default NoteCard;
+
