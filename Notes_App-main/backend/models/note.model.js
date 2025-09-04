@@ -15,6 +15,10 @@ const noteSchema = new Schema({
     type: Date,
     default: Date.now,
   },
+  screenshot: {
+      type: String, 
+      default: null,
+  },
   isPinned: {
     type: Boolean,
     default: false,
