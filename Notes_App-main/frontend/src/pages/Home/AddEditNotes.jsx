@@ -6,17 +6,17 @@ import html2canvas from 'html2canvas';
 const AddEditNotes = ({ type, noteData, getAllNotes, onClose }) => {
   const [title, setTitle] = useState(noteData?.title || '');
   const [content, setContent] = useState(noteData?.content || '');
-  const [screenshot, setScreenshot] = useState(noteData?.screenshot || '');
+  const [screenshot, setScreenshot] = useState(noteData?.screenshot || null);
   const [error, setError] = useState(null);
   const [loadingScreenshot, setLoadingScreenshot] = useState(false);
 
-  // Add Note 
-  const AddNewNote = async () => {
+  // Add Note
+  const AddNewNote = async (noteContent = content, screenshotData = screenshot) => {
     try {
       const response = await axiosInstance.post('/add-note', {
         title,
-        content,
-        screenshot,
+        content: noteContent,
+        screenshot: screenshotData, // include screenshot
         tags: [],
         isPinned: false,
       });
@@ -31,13 +31,13 @@ const AddEditNotes = ({ type, noteData, getAllNotes, onClose }) => {
   };
 
   // Edit Note
-  const EditNote = async () => {
+  const EditNote = async (noteContent = content, screenshotData = screenshot) => {
     const noteId = noteData._id;
     try {
       const response = await axiosInstance.put('/edit-note/' + noteId, {
         title,
-        content,
-        screenshot,
+        content: noteContent,
+        screenshot: screenshotData, // include screenshot
         tags: [],
         isPinned: false,
       });
@@ -54,7 +54,7 @@ const AddEditNotes = ({ type, noteData, getAllNotes, onClose }) => {
   // Handle form submit
   const handleSubmit = () => {
     if (!title) return setError('Please enter a title');
-    if (!content && !screenshot) return setError('Please enter content or take a screenshot');
+    if (!content) return setError('Please enter content');
     setError('');
     type === 'edit' ? EditNote() : AddNewNote();
   };
@@ -65,8 +65,14 @@ const AddEditNotes = ({ type, noteData, getAllNotes, onClose }) => {
     try {
       const canvas = await html2canvas(document.body); // capture full page
       const imgData = canvas.toDataURL('image/png');
+      setScreenshot(imgData); // store screenshot in state
 
-      setScreenshot(imgData); // store screenshot separately
+      // Save immediately with note
+      if (type === 'edit') {
+        await EditNote(content, imgData);
+      } else {
+        await AddNewNote(content, imgData);
+      }
     } catch (err) {
       console.error(err);
       setError('Failed to capture screenshot');
@@ -117,11 +123,11 @@ const AddEditNotes = ({ type, noteData, getAllNotes, onClose }) => {
       {/* Screenshot Preview */}
       {screenshot && (
         <div className="mb-4">
-          <p className="text-sm font-medium text-gray-600">Screenshot</p>
+          <label className="text-sm font-medium text-gray-600">Screenshot Preview</label>
           <img
             src={screenshot}
             alt="Screenshot Preview"
-            className="w-full rounded border"
+            className="mt-2 w-full max-h-64 object-contain border rounded"
           />
         </div>
       )}
