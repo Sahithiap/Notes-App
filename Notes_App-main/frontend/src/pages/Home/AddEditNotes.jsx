@@ -6,15 +6,17 @@ import html2canvas from 'html2canvas';
 const AddEditNotes = ({ type, noteData, getAllNotes, onClose }) => {
   const [title, setTitle] = useState(noteData?.title || '');
   const [content, setContent] = useState(noteData?.content || '');
+  const [screenshot, setScreenshot] = useState(noteData?.screenshot || '');
   const [error, setError] = useState(null);
   const [loadingScreenshot, setLoadingScreenshot] = useState(false);
 
   // Add Note 
-  const AddNewNote = async (noteContent = content) => {
+  const AddNewNote = async () => {
     try {
       const response = await axiosInstance.post('/add-note', {
         title,
-        content: noteContent,
+        content,
+        screenshot,
         tags: [],
         isPinned: false,
       });
@@ -29,12 +31,13 @@ const AddEditNotes = ({ type, noteData, getAllNotes, onClose }) => {
   };
 
   // Edit Note
-  const EditNote = async (noteContent = content) => {
+  const EditNote = async () => {
     const noteId = noteData._id;
     try {
       const response = await axiosInstance.put('/edit-note/' + noteId, {
         title,
-        content: noteContent,
+        content,
+        screenshot,
         tags: [],
         isPinned: false,
       });
@@ -51,7 +54,7 @@ const AddEditNotes = ({ type, noteData, getAllNotes, onClose }) => {
   // Handle form submit
   const handleSubmit = () => {
     if (!title) return setError('Please enter a title');
-    if (!content) return setError('Please enter content');
+    if (!content && !screenshot) return setError('Please enter content or take a screenshot');
     setError('');
     type === 'edit' ? EditNote() : AddNewNote();
   };
@@ -63,8 +66,7 @@ const AddEditNotes = ({ type, noteData, getAllNotes, onClose }) => {
       const canvas = await html2canvas(document.body); // capture full page
       const imgData = canvas.toDataURL('image/png');
 
-      // Save screenshot as note content (base64)
-      type === 'edit' ? EditNote(imgData) : AddNewNote(imgData);
+      setScreenshot(imgData); // store screenshot separately
     } catch (err) {
       console.error(err);
       setError('Failed to capture screenshot');
@@ -112,6 +114,18 @@ const AddEditNotes = ({ type, noteData, getAllNotes, onClose }) => {
         />
       </div>
 
+      {/* Screenshot Preview */}
+      {screenshot && (
+        <div className="mb-4">
+          <p className="text-sm font-medium text-gray-600">Screenshot</p>
+          <img
+            src={screenshot}
+            alt="Screenshot Preview"
+            className="w-full rounded border"
+          />
+        </div>
+      )}
+
       {/* Error Message */}
       {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
@@ -136,4 +150,5 @@ const AddEditNotes = ({ type, noteData, getAllNotes, onClose }) => {
 };
 
 export default AddEditNotes;
+
 
