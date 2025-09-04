@@ -47,3 +47,34 @@ exports.deleteNote = async (req, res) => {
     await note.deleteOne();
     return res.json({ error: false, message: "Note deleted" });
 };
+
+const addNote = async (req, res) => {
+  try {
+    const { title, content, screenshot, tags, isPinned } = req.body;
+    const note = await Note.create({
+      title,
+      content,
+      screenshot, // save screenshot here
+      tags,
+      isPinned,
+    });
+    res.status(201).json({ note });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to add note" });
+  }
+};
+
+const editNote = async (req, res) => {
+  try {
+    const { title, content, screenshot, tags, isPinned } = req.body;
+    const note = await Note.findByIdAndUpdate(
+      req.params.id,
+      { title, content, screenshot, tags, isPinned },
+      { new: true }
+    );
+    res.status(200).json({ note });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to update note" });
+  }
+};
+
