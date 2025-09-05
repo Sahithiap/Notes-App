@@ -1,51 +1,52 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/user.model");
+const Token = require("../models/token.model");
 
+// Register new user
 exports.register = async (req, res) => {
-    const { fullName, email, password } = req.body;
+  const { fullName, email, password } = req.body;
+  if (!fullName || !email || !password) {
+    return res.status(400).json({ error: true, message: "All fields required" });
+  }
 
-    if (!fullName || !email || !password) {
-        return res.status(400).json({ error: true, message: "All fields are required" });
-    }
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    return res.status(409).json({ error: true, message: "User already exists" });
+  }
 
-    const isUser = await User.findOne({ email });
-    if (isUser) return res.json({ error: true, message: "User already exists" });
+  const newUser = new User({ fullName, email, password });
+  await newUser.save();
 
-    const user = new User({ fullName, email, password });
-    await user.save();
+  const accessToken = jwt.sign(
+    { userId: newUser._id, email: newUser.email },
+    process.env.ACCESS_TOKEN_SECRET,
+    { expiresIn: "1d" }
+  );
 
-    const accessToken = jwt.sign({ user }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "1d" });
+  await new Token({ userId: newUser._id, token: accessToken }).save();
 
-    return res.json({ error: false, user, accessToken, message: "Registration Successful" });
+  return res.status(201).json({ success: true, accessToken });
 };
 
+// Log in existing user
 exports.login = async (req, res) => {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: true, message: "All fields required" });
+  }
 
-    if (!email || !password) return res.status(400).json({ error: true, message: "All fields required" });
+  const user = await User.findOne({ email });
+  if (!user || user.password !== password) {
+    return res.status(401).json({ error: true, message: "Invalid credentials" });
+  }
 
-    const user = await User.findOne({ email });
-    if (!user || user.password !== password) {
-        return res.status(400).json({ error: true, message: "Invalid credentials" });
-    }
+  const accessToken = jwt.sign(
+    { userId: user._id, email: user.email },
+    process.env.ACCESS_TOKEN_SECRET,
+    { expiresIn: "1d" }
+  );
 
-    const accessToken = jwt.sign({ user }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "1d" });
+  await new Token({ userId: user._id, token: accessToken }).save();
 
-    return res.json({ error: false, user, email, accessToken, message: "Login Successful" });
-};
-
-exports.getUser = async (req, res) => {
-    const { user } = req.user;
-
-    const isUser = await User.findOne({ email: user.email });
-    if (!isUser) return res.sendStatus(401);
-
-    return res.json({
-        user: { fullName: isUser.fullName, email: isUser.email, _id: isUser._id, createdOn: isUser.createdOn },
-        message: "User fetched successfully"
-    });
-};
-exports.logout = (req, res) => {
-    // Invalidate the token by not sending it back to the client
-    return res.json({ error: false, message: "Logged out successfully" });
+  return res.json({ success: true, accessToken });
 };
