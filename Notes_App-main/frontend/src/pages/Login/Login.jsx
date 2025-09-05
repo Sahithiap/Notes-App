@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Navbar from '../../component/Navbar';
-import { Link, useNavigate } from 'react-router-dom';
 import Passwordinput from '../../component/Passwordinput';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -17,19 +17,18 @@ const Login = () => {
     setLoading(true);
 
     // Hardcoded credentials
-    const mockEmail = 'sahithi@example.com';
-    const mockPassword = 'Test@123';
+    const validEmail = 'sahithi@example.com';
+    const validPassword = 'Test@123';
 
-    setTimeout(() => {
-      if (email === mockEmail && password === mockPassword) {
-        // Store a fake token
-        localStorage.setItem('token', 'mock-token-123');
-        navigate('/dashboard');
-      } else {
-        setError('Invalid email or password');
-      }
+    if (email !== validEmail || password !== validPassword) {
+      setError('Invalid email or password');
       setLoading(false);
-    }, 500); // simulate network delay
+      return;
+    }
+
+    // Save a mock token
+    localStorage.setItem('token', 'mock-token-12345');
+    navigate('/dashboard');
   };
 
   return (
@@ -43,11 +42,10 @@ const Login = () => {
             </h2>
 
             <div className="mb-4">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Email
               </label>
               <input
-                id="email"
                 type="email"
                 placeholder="Enter your email"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm"
@@ -74,13 +72,6 @@ const Login = () => {
             >
               {loading ? 'Logging in...' : 'Login'}
             </button>
-
-            <p className="text-sm text-center mt-6 text-gray-600">
-              Don't have an account?{' '}
-              <Link to="/signup" className="text-indigo-600 font-medium underline hover:text-indigo-700">
-                Sign up here
-              </Link>
-            </p>
           </form>
         </div>
       </div>
