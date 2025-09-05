@@ -10,23 +10,26 @@ const AddEditNotes = ({ type, noteData, getAllNotes, onClose }) => {
   const [loadingScreenshot, setLoadingScreenshot] = useState(false);
 
   // Add Note 
-  const AddNewNote = async (noteContent = content) => {
-    try {
-      const response = await axiosInstance.post('/add-note', {
-        title,
-        content: noteContent,
-        tags: [],
-        isPinned: false,
-      });
-
-      if (response.data?.note) {
-        getAllNotes();
-        onClose();
-      }
-    } catch (error) {
-      setError(error.response?.data?.message || 'Something went wrong');
+const AddNewNote = async (noteContent = content) => {
+  console.log("Adding note:", { title, content: noteContent }); // debug
+  try {
+    const response = await axiosInstance.post('/add-note', {
+      title,
+      content: noteContent,
+      tags: [],
+      isPinned: false,
+    });
+    console.log("Response:", response.data);
+    if (response.data?.note) {
+      getAllNotes();
+      onClose();
     }
-  };
+  } catch (error) {
+    console.error("Error adding note:", error);
+    setError(error.response?.data?.message || 'Something went wrong');
+  }
+};
+
 
   // Edit Note
   const EditNote = async (noteContent = content) => {
