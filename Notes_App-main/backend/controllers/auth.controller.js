@@ -1,52 +1,70 @@
-const jwt = require("jsonwebtoken");
 const User = require("../models/user.model");
-const Token = require("../models/token.model");
+const jwt = require("jsonwebtoken");
 
-// Register new user
+// Register new account
 exports.register = async (req, res) => {
-  const { fullName, email, password } = req.body;
-  if (!fullName || !email || !password) {
-    return res.status(400).json({ error: true, message: "All fields required" });
+  try {
+    const { username, fullName, email, password } = req.body;
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser)
+      return res.status(400).json({ message: "Email already in use" });
+
+    const newUser = new User({
+      username,
+      fullName,
+      email,
+      password, // gets hashed automatically in User model pre-save
+    });
+
+    await newUser.save();
+    res.status(201).json({ message: "Account created successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-
-  const existingUser = await User.findOne({ email });
-  if (existingUser) {
-    return res.status(409).json({ error: true, message: "User already exists" });
-  }
-
-  const newUser = new User({ fullName, email, password });
-  await newUser.save();
-
-  const accessToken = jwt.sign(
-    { userId: newUser._id, email: newUser.email },
-    process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: "1d" }
-  );
-
-  await new Token({ userId: newUser._id, token: accessToken }).save();
-
-  return res.status(201).json({ success: true, accessToken });
 };
 
-// Log in existing user
+// Login
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ error: true, message: "All fields required" });
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user)
+      return res.status(400).json({ message: "Invalid email or password" });
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch)
+      return res.status(400).json({ message: "Invalid email or password" });
+
+    const token = jwt.sign(
+      { id: user._id, username: user.username, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    user.lastLogin = new Date();
+    await user.save();
+
+    res.json({
+      message: "Login successful",
+      token,
+      user: { id: user._id, username: user.username, email: user.email },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
+};
 
-  const user = await User.findOne({ email });
-  if (!user || user.password !== password) {
-    return res.status(401).json({ error: true, message: "Invalid credentials" });
+// Get logged-in user
+exports.getUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-
-  const accessToken = jwt.sign(
-    { userId: user._id, email: user.email },
-    process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: "1d" }
-  );
-
-  await new Token({ userId: user._id, token: accessToken }).save();
-
-  return res.json({ success: true, accessToken });
 };
