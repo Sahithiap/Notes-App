@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import Navbar from '../../component/Navbar';
 import { Link, useNavigate } from 'react-router-dom';
 import Passwordinput from '../../component/Passwordinput';
-import { validateEmail } from '../../utils/helper';
-import axiosInstance from '../../utils/axiosInstance';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -13,38 +11,25 @@ const Login = () => {
 
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleLogin = (e) => {
     e.preventDefault();
-
-    if (!validateEmail(email)) {
-      setError('Please enter a valid email');
-      return;
-    }
-
-    if (!password) {
-      setError('Please enter your password');
-      return;
-    }
-
     setError('');
     setLoading(true);
 
-    try {
-      const response = await axiosInstance.post('/login', {
-        email,
-        password,
-      });
+    // Hardcoded credentials
+    const mockEmail = 'sahithi@example.com';
+    const mockPassword = 'Test@123';
 
-      if (response.data?.accessToken) {
-        localStorage.setItem('token', response.data.accessToken);
+    setTimeout(() => {
+      if (email === mockEmail && password === mockPassword) {
+        // Store a fake token
+        localStorage.setItem('token', 'mock-token-123');
         navigate('/dashboard');
+      } else {
+        setError('Invalid email or password');
       }
-    } catch (error) {
-      const message = error.response?.data?.message || 'An unexpected error occurred. Please try again.';
-      setError(message);
-    } finally {
       setLoading(false);
-    }
+    }, 500); // simulate network delay
   };
 
   return (
@@ -57,7 +42,6 @@ const Login = () => {
               Welcome Back 👋
             </h2>
 
-            {/* Email */}
             <div className="mb-4">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email
@@ -72,7 +56,6 @@ const Login = () => {
               />
             </div>
 
-            {/* Password */}
             <div className="mb-2">
               <Passwordinput
                 value={password}
@@ -80,10 +63,8 @@ const Login = () => {
               />
             </div>
 
-            {/* Error */}
             {error && <p className="text-red-500 text-sm mt-2 mb-4">{error}</p>}
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
@@ -94,7 +75,6 @@ const Login = () => {
               {loading ? 'Logging in...' : 'Login'}
             </button>
 
-            {/* Link to Sign Up */}
             <p className="text-sm text-center mt-6 text-gray-600">
               Don't have an account?{' '}
               <Link to="/signup" className="text-indigo-600 font-medium underline hover:text-indigo-700">
