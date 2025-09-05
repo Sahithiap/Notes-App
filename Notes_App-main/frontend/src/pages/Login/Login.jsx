@@ -36,7 +36,7 @@ const Login = () => {
       });
 
       if (response.data?.accessToken) {
-        localStorage.setItem('token', response.data.accessToken);
+        localStorage.setItem('token', response.data.token);
         navigate('/dashboard');
       }
     } catch (error) {
