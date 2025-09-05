@@ -8,37 +8,40 @@ const notesRoutes = require("./routes/notes.routes");
 
 const app = express();
 
+// 🔗 Connect Database
 connectDB();
 
-
-// CORS configuration
+// 🌍 CORS configuration
 const corsOptions = {
-  origin: ['https://notes-app-wcr7.vercel.app', 'http://localhost:5173'],
+  origin: [
+    "https://notes-app-wcr7.vercel.app", // Vercel frontend
+    "http://localhost:5173"              // Local dev frontend
+  ],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
 };
 
 // Apply CORS
 app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // Handle preflight requests
 
-// Handle preflight (OPTIONS) requests
-app.options('*', cors(corsOptions));
-
-
+// 📦 Middleware
 app.use(express.json({ limit: "10mb" }));
 
-
+// 🏠 Root route
 app.get("/", (req, res) => {
-    res.send("Hello World");
+  res.send("✅ NotesApp backend is running!");
 });
 
-app.use("/", authRoutes);
-app.use("/", notesRoutes);
+// 📌 API routes
+app.use("/auth", authRoutes);
+app.use("/notes", notesRoutes);
 
-const port = process.env.PORT 
-
+// 🌐 Server listen
+const port = process.env.PORT || 5000;
 app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+  console.log(`🚀 Server is running on http://localhost:${port}`);
 });
 
 module.exports = app;
+
