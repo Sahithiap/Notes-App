@@ -1,52 +1,32 @@
-import React, { useState } from "react";
-import Passwordinput from "./Passwordinput";
-import axios from "axios";
+import React, { useState } from 'react';
+import { FaRegEye, FaRegEyeSlash } from 'react-icons/fa6';
 
-const LoginForm = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+const Passwordinput = ({ value, onChange, placeholder = 'Password', id = 'password', name = 'password' }) => {
+  const [isShowPassword, setIsShowPassword] = useState(false);
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post(
-        "https://notes-app-arsj.onrender.com/", 
-        { email, password },
-        { headers: { "Content-Type": "application/json" } }
-      );
-
-      console.log("Login Success:", response.data);
-      localStorage.setItem("token", response.data.token); // save JWT
-      setError("");
-      // redirect or load user dashboard
-    } catch (err) {
-      console.error(err);
-      setError(err.response?.data?.message || "Login failed");
-    }
-  };
+  const toggleShowPassword = () => setIsShowPassword(!isShowPassword);
 
   return (
-    <form onSubmit={handleLogin} className="max-w-sm mx-auto mt-10">
-      <h2 className="text-2xl font-bold mb-4">Login</h2>
-      {error && <p className="text-red-500 mb-2">{error}</p>}
+    <div className="relative mb-4">
       <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email"
-        className="w-full px-4 py-3 mb-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
+        type={isShowPassword ? 'text' : 'password'}
+        id={id}
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="w-full px-4 py-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400 pr-10"
+        aria-label="Password"
       />
-      <Passwordinput value={password} onChange={(e) => setPassword(e.target.value)} />
-      <button
-        type="submit"
-        className="w-full bg-indigo-500 text-white py-3 rounded-md hover:bg-indigo-600 transition"
+      <div
+        className="absolute right-3 top-3.5 cursor-pointer text-gray-400 hover:text-indigo-500 transition"
+        onClick={toggleShowPassword}
       >
-        Login
-      </button>
-    </form>
+        {isShowPassword ? <FaRegEye size={20} /> : <FaRegEyeSlash size={20} />}
+      </div>
+    </div>
   );
 };
 
-export default LoginForm;
+export default Passwordinput;
 
