@@ -1,11 +1,75 @@
-const express = require("express");
-const router = express.Router();
-const { register, login, getUser } = require("../controllers/auth.controller");
-const { authenticateToken } = require("../middleware/auth.middleware");
+const User = require("../models/User");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 
-router.post("/create-account", register);
-router.post("/login", login);
-router.get("/get-user", authenticateToken, getUser);
+// Register new account
+exports.register = async (req, res) => {
+  try {
+    const { username, fullName, email, password } = req.body;
 
-module.exports = router;
-// This file defines the routes for user authentication, including registration, login, and fetching user details.
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) return res.status(400).json({ message: "Email already in use" });
+
+    const newUser = new User({
+      username,
+      fullName,
+      email,
+      password, // gets hashed automatically in User model pre-save
+    });
+
+    await newUser.save();
+    res.status(201).json({ message: "Account created successfully" });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Login
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Find user
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ message: "Invalid email or password" });
+
+    // Compare password
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) return res.status(400).json({ message: "Invalid email or password" });
+
+    // Generate JWT
+    const token = jwt.sign(
+      { id: user._id, username: user.username, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    // Update lastLogin
+    user.lastLogin = new Date();
+    await user.save();
+
+    res.json({
+      message: "Login successful",
+      token,
+      user: { id: user._id, username: user.username, email: user.email }
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Get logged-in user
+exports.getUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json(user);
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
