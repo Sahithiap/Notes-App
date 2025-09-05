@@ -1,15 +1,17 @@
 const express = require("express");
 const router = express.Router();
-const authController = require("../controllers/auth.controller");
+
+const { register, login, getUser } = require("../controllers/auth.controller");
 const { authenticateToken } = require("../middleware/auth.middleware");
 
-// Create new user account
-router.post("/create-account", authController.register);
+// Register
+router.post("/create-account", register);
 
-// Login user
-router.post("/login", authController.login);
+// Login
+router.post("/login", login);
 
-// Get logged-in user (protected route)
-router.get("/get-user", authenticateToken, authController.getUser);
+// Get logged-in user
+router.get("/get-user", authenticateToken, getUser);
 
 module.exports = router;
+
